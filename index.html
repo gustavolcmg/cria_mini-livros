@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Mini Livro A4</title>
+  <style>
+    /* Reset e Layout Principal */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    }
+
+    body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #f3f4f6;
+      color: #1f2937;
+      display: flex;
+      flex-direction: column;
+    }
+
+    body.dark-theme {
+      background-color: #111827;
+      color: #f9fafb;
+    }
+
+    .app-container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
+      width: 100%;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background-color: #ffffff;
+      padding: 10px 16px;
+      border-radius: 8px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    body.dark-theme header,
+    body.dark-theme .panel {
+      background-color: #1f2937;
+      color: #f9fafb;
+      border-color: #374151;
+    }
+
+    .main-content {
+      display: flex;
+      flex: 1;
+      gap: 12px;
+      height: calc(100% - 60px);
+      overflow: hidden;
+    }
+
+    .panel {
+      background-color: #ffffff;
+      border-radius: 8px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+      overflow-y: auto;
+    }
+
+    .panel-left {
+      width: 340px;
+      flex-shrink: 0;
+    }
+
+    .panel-right {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      background-color: #e5e7eb;
+      position: relative;
+    }
+
+    body.dark-theme .panel-right {
+      background-color: #374151;
+    }
+
+    .dropzone {
+      border: 2px dashed #9ca3af;
+      border-radius: 6px;
+      padding: 12px;
+      text-align: center;
+      cursor: pointer;
+      background-color: #f9fafb;
+      transition: border-color 0.2s;
+      font-size: 12px;
+    }
+
+    body.dark-theme .dropzone {
+      background-color: #111827;
+      border-color: #4b5563;
+    }
+
+    .dropzone:hover {
+      border-color: #3b82f6;
+    }
+
+    .preview-original {
+      width: 100%;
+      height: 90px;
+      object-fit: contain;
+      background: #00000010;
+      border-radius: 4px;
+      display: none;
+    }
+
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 12px;
+    }
+
+    label {
+      font-weight: 600;
+    }
+
+    select, input[type="text"], button {
+      padding: 6px 8px;
+      border-radius: 6px;
+      border: 1px solid #d1d5db;
+      font-size: 12px;
+      outline: none;
+    }
+
+    body.dark-theme select,
+    body.dark-theme input[type="text"] {
+      background-color: #111827;
+      color: #fff;
+      border-color: #4b5563;
+    }
+
+    .btn-group {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 6px;
+    }
+
+    button {
+      background-color: #2563eb;
+      color: white;
+      border: none;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+
+    button:hover {
+      background-color: #1d4ed8;
+    }
+
+    button.btn-secondary {
+      background-color: #4b5563;
+    }
+
+    button.btn-secondary:hover {
+      background-color: #374151;
+    }
+
+    button.btn-success {
+      background-color: #059669;
+    }
+
+    button.btn-success:hover {
+      background-color: #047857;
+    }
+
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+    }
+
+    .margins-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      background-color: #f9fafb;
+      padding: 8px;
+      border-radius: 6px;
+      border: 1px solid #e5e7eb;
+    }
+
+    body.dark-theme .margins-grid {
+      background-color: #111827;
+      border-color: #374151;
+    }
+
+    .margin-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+    }
+
+    .margin-item label {
+      font-size: 11px;
+      white-space: nowrap;
+      min-width: 65px;
+    }
+
+    .margin-item input {
+      width: 100%;
+      font-size: 11px;
+      padding: 4px 6px;
+    }
+
+    .a4-container-wrapper {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 10px;
+    }
+
+    .a4-sheet {
+      aspect-ratio: 297 / 210;
+      height: 100%;
+      max-width: 100%;
+      background-color: #ffffff;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-template-rows: repeat(2, 1fr);
+      position: relative;
+      box-sizing: border-box;
+    }
+
+    .a4-sheet.show-cut-lines::before {
+      content: "";
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      pointer-events: none;
+      z-index: 10;
+      background-image: 
+        linear-gradient(to right, transparent calc(25% - 0.5px), #000 25%, #000 calc(25% + 0.5px), transparent calc(25% + 0.5px)),
+        linear-gradient(to right, transparent calc(50% - 0.5px), #000 50%, #000 calc(50% + 0.5px), transparent calc(50% + 0.5px)),
+        linear-gradient(to right, transparent calc(75% - 0.5px), #000 75%, #000 calc(75% + 0.5px), transparent calc(75% + 0.5px)),
+        linear-gradient(to bottom, transparent calc(50% - 0.5px), #000 50%, #000 calc(50% + 0.5px), transparent calc(50% + 0.5px));
+      background-size: 100% 100%;
+    }
+
+    .page-slot {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      cursor: grab;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background-color: #fafafa;
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    .page-slot.drag-over {
+      outline: 3px solid #2563eb !important;
+      background-color: #dbeafe !important;
+    }
+
+    .page-slot:hover {
+      outline: 2px dashed #2563eb;
+      outline-offset: -2px;
+    }
+
+    .page-slot-content {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+      overflow: hidden;
+    }
+
+    .page-slot-content img {
+      width: 100%;
+      height: 100%;
+      object-fit: fill;
+      display: block;
+      pointer-events: none;
+    }
+
+    .page-slot.upside-down img {
+      transform: rotate(180deg);
+    }
+
+    /* Regras de Impressão */
+    @media print {
+      @page {
+        size: A4 landscape;
+        margin: 0;
+      }
+
+      html, body {
+        width: 100% !important;
+        height: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        overflow: visible !important;
+      }
+
+      .app-container > header,
+      .panel-left {
+        display: none !important;
+      }
+
+      .app-container {
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100% !important;
+        height: 100% !important;
+      }
+
+      .main-content, .panel-right, .a4-container-wrapper {
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        background: white !important;
+      }
+
+      .a4-sheet {
+        box-shadow: none !important;
+        width: 100vw !important;
+        height: 100vh !important;
+        max-width: none !important;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+
+      .page-slot {
+        outline: none !important;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="app-container" id="app-container">
+    <header>
+      <h2 style="font-size: 16px; font-weight: bold;">Gerador de Mini Livro A4</h2>
+      <div style="display: flex; gap: 10px; align-items: center;">
+        <label class="checkbox-group">
+          <input type="checkbox" id="theme-toggle"> Modo Escuro
+        </label>
+      </div>
+    </header>
+
+    <div class="main-content">
+      <!-- Painel de Controles -->
+      <div class="panel panel-left">
+        <div class="control-group">
+          <label>Carregar Imagem</label>
+          <div class="dropzone" id="dropzone">
+            Clique, Arraste ou Cole uma imagem
+            <input type="file" id="file-input" accept="image/*" style="display: none;">
+          </div>
+          <img id="preview-src" class="preview-original" alt="Preview">
+        </div>
+
+        <div class="control-group">
+          <label>Edição da Imagem Original</label>
+          <div class="btn-group">
+            <button type="button" class="btn-secondary" id="btn-flip-h">Inverter H</button>
+            <button type="button" class="btn-secondary" id="btn-flip-v">Inverter V</button>
+            <button type="button" class="btn-secondary" id="btn-rotate-cw">Girar 90° ↻</button>
+            <button type="button" class="btn-secondary" id="btn-rotate-ccw">Girar 90° ↺</button>
+          </div>
+        </div>
+
+        <div class="control-group">
+          <label for="cut-mode">Configuração de Corte</label>
+          <select id="cut-mode">
+            <option value="4x2" selected>Corte 4 por linha (Padrao 1-8)</option>
+            <option value="3imagens">3 imagens (Fatiar em 8 e reordenar)</option>
+            <option value="2x4">Corte 2 por linha (4 linhas x 2 colunas)</option>
+            <option value="equal">Páginas iguais (Copiar 8x)</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn-success" id="btn-generate">Gerar Livrinho</button>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2px 0;">
+
+        <div class="control-group">
+          <label class="checkbox-group">
+            <input type="checkbox" id="toggle-cut-lines"> Exibir linhas de corte (1px)
+          </label>
+        </div>
+
+        <!-- Inputs de Margens Físicas -->
+        <div class="control-group">
+          <label>Margens Físicas da Folha (Sup, Dir, Inf, Esq em px)</label>
+          <div class="margins-grid">
+            <div class="margin-item"><label for="margin-img-0">Imagem 1:</label><input type="text" id="margin-img-0" data-index="0" value="5, 5, 5, 5"></div>
+            <div class="margin-item"><label for="margin-img-1">Imagem 2:</label><input type="text" id="margin-img-1" data-index="1" value="10, 8, 10, 12"></div>
+            <div class="margin-item"><label for="margin-img-2">Imagem 3:</label><input type="text" id="margin-img-2" data-index="2" value="10, 0, 10, 20"></div>
+            <div class="margin-item"><label for="margin-img-3">Imagem 4:</label><input type="text" id="margin-img-3" data-index="3" value="10, 0, 10, 20"></div>
+            <div class="margin-item"><label for="margin-img-4">Imagem 5:</label><input type="text" id="margin-img-4" data-index="4" value="10, 8, 10, 12"></div>
+            <div class="margin-item"><label for="margin-img-5">Imagem 6:</label><input type="text" id="margin-img-5" data-index="5" value="10, 10, 10, 10"></div>
+            <div class="margin-item"><label for="margin-img-6">Imagem 7:</label><input type="text" id="margin-img-6" data-index="6" value="10, 18, 10, 2"></div>
+            <div class="margin-item"><label for="margin-img-7">Imagem 8:</label><input type="text" id="margin-img-7" data-index="7" value="10, 20, 10, 0"></div>
+          </div>
+        </div>
+
+        <div style="margin-top: 10px; display: flex; flex-direction: column; gap: 6px;">
+          <button type="button" id="btn-print">Imprimir (A4 Paisagem)</button>
+          <button type="button" class="btn-secondary" id="btn-save-png">Salvar Livrinho (.png)</button>
+          <button type="button" class="btn-secondary" id="btn-export-csv" style="font-size: 11px; padding: 4px;">Exportar Dados (.csv)</button>
+        </div>
+      </div>
+
+      <!-- Área de Visualização da Folha A4 -->
+      <div class="panel panel-right">
+        <div class="a4-container-wrapper">
+          <div class="a4-sheet" id="a4-sheet">
+            <!-- Slots montados via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <input type="file" id="replace-file-input" accept="image/*" style="display: none;">
+
+  <script>
+    (function () {
+      let rawImage = new Image();
+      let isImageLoaded = false;
+      let transformState = { flipH: 1, flipV: 1, rotation: 0 };
+      let pageImages = new Array(8).fill(null);
+      
+      // Margens padrão do modo regular
+      const defaultMargins = [
+        [5, 5, 5, 5],      // Imagem 1
+        [10, 8, 10, 12],   // Imagem 2
+        [10, 0, 10, 20],   // Imagem 3
+        [10, 0, 10, 20],   // Imagem 4
+        [10, 8, 10, 12],   // Imagem 5
+        [10, 10, 10, 10],  // Imagem 6
+        [10, 18, 10, 2],   // Imagem 7
+        [10, 20, 10, 0]    // Imagem 8
+      ];
+
+      // Novas margens padrão corrigidas para "3 imagens"
+      const margins3Imagens = [
+        [10, 20, 10, 0],   // Imagem 1
+        [10, 0, 10, 20],   // Imagem 2
+        [10, 0, 10, 20],   // Imagem 3
+        [10, 20, 10, 0],   // Imagem 4
+        [10, 20, 10, 0],   // Imagem 5
+        [10, 0, 10, 20],   // Imagem 6
+        [10, 20, 10, 0],   // Imagem 7
+        [10, 0, 10, 20]    // Imagem 8
+      ];
+
+      let pageMargins = JSON.parse(JSON.stringify(defaultMargins));
+      
+      let slotToReplace = null;
+      let draggedSlotIndex = null;
+
+      const layout4x2 = [
+        { id: 'slot-7', idx: 6, upsideDown: true },
+        { id: 'slot-6', idx: 5, upsideDown: true },
+        { id: 'slot-5', idx: 4, upsideDown: true },
+        { id: 'slot-4', idx: 3, upsideDown: true },
+        { id: 'slot-8', idx: 7, upsideDown: false },
+        { id: 'slot-1', idx: 0, upsideDown: false },
+        { id: 'slot-2', idx: 1, upsideDown: false },
+        { id: 'slot-3', idx: 2, upsideDown: false }
+      ];
+
+      const layout3Imagens = [
+        // Primeira linha: 8, 7, 6, 5 de cabeça para baixo
+        { id: 'slot-3img-8', idx: 7, upsideDown: true },
+        { id: 'slot-3img-7', idx: 6, upsideDown: true },
+        { id: 'slot-3img-6', idx: 5, upsideDown: true },
+        { id: 'slot-3img-5', idx: 4, upsideDown: true },
+        // Segunda linha: 2, 1, 3, 4 normais
+        { id: 'slot-3img-2', idx: 1, upsideDown: false },
+        { id: 'slot-3img-1', idx: 0, upsideDown: false },
+        { id: 'slot-3img-3', idx: 2, upsideDown: false },
+        { id: 'slot-3img-4', idx: 3, upsideDown: false }
+      ];
+
+      let currentLayout = layout4x2;
+
+      const themeToggle = document.getElementById('theme-toggle');
+      const dropzone = document.getElementById('dropzone');
+      const fileInput = document.getElementById('file-input');
+      const previewSrc = document.getElementById('preview-src');
+      const cutModeSelect = document.getElementById('cut-mode');
+      const btnGenerate = document.getElementById('btn-generate');
+      const toggleCutLines = document.getElementById('toggle-cut-lines');
+      const a4Sheet = document.getElementById('a4-sheet');
+      const btnPrint = document.getElementById('btn-print');
+      const btnSavePng = document.getElementById('btn-save-png');
+      const btnExportCsv = document.getElementById('btn-export-csv');
+      const replaceFileInput = document.getElementById('replace-file-input');
+
+      themeToggle.addEventListener('change', (e) => {
+        document.body.classList.toggle('dark-theme', e.target.checked);
+      });
+
+      document.getElementById('btn-flip-h').addEventListener('click', () => { transformState.flipH *= -1; updateSourcePreview(); });
+      document.getElementById('btn-flip-v').addEventListener('click', () => { transformState.flipV *= -1; updateSourcePreview(); });
+      document.getElementById('btn-rotate-cw').addEventListener('click', () => { transformState.rotation = (transformState.rotation + 90) % 360; updateSourcePreview(); });
+      document.getElementById('btn-rotate-ccw').addEventListener('click', () => { transformState.rotation = (transformState.rotation - 90 + 360) % 360; updateSourcePreview(); });
+
+      dropzone.addEventListener('click', () => fileInput.click());
+      fileInput.addEventListener('change', (e) => handleFileSelect(e.target.files[0]));
+
+      dropzone.addEventListener('dragover', (e) => e.preventDefault());
+      dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length > 0) handleFileSelect(e.dataTransfer.files[0]);
+      });
+
+      window.addEventListener('paste', (e) => {
+        const items = e.clipboardData.items;
+        for (let item of items) {
+          if (item.type.indexOf('image') !== -1) {
+            handleFileSelect(item.getAsFile());
+            break;
+          }
+        }
+      });
+
+      function handleFileSelect(file) {
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          rawImage = new Image();
+          rawImage.onload = () => {
+            isImageLoaded = true;
+            transformState = { flipH: 1, flipV: 1, rotation: 0 };
+            updateSourcePreview();
+          };
+          rawImage.src = event.target.result;
+        };
+        reader.readAsDataURL(file);
+      }
+
+      function updateSourcePreview() {
+        if (!isImageLoaded) return;
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        
+        const isRotated = transformState.rotation % 180 !== 0;
+        canvas.width = isRotated ? rawImage.height : rawImage.width;
+        canvas.height = isRotated ? rawImage.width : rawImage.height;
+
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((transformState.rotation * Math.PI) / 180);
+        ctx.scale(transformState.flipH, transformState.flipV);
+        ctx.drawImage(rawImage, -rawImage.width / 2, -rawImage.height / 2);
+
+        previewSrc.src = canvas.toDataURL();
+        previewSrc.style.display = 'block';
+      }
+
+      cutModeSelect.addEventListener('change', () => {
+        const mode = cutModeSelect.value;
+        if (mode === '3imagens') {
+          currentLayout = layout3Imagens;
+          pageMargins = JSON.parse(JSON.stringify(margins3Imagens));
+        } else {
+          currentLayout = layout4x2;
+          pageMargins = JSON.parse(JSON.stringify(defaultMargins));
+        }
+        updateMarginInputsUI();
+        buildDOMSlots();
+        if (isImageLoaded) btnGenerate.click();
+      });
+
+      function updateMarginInputsUI() {
+        for (let i = 0; i < 8; i++) {
+          const inputEl = document.getElementById(`margin-img-${i}`);
+          if (inputEl) {
+            inputEl.value = pageMargins[i].join(', ');
+          }
+        }
+      }
+
+      function buildDOMSlots() {
+        a4Sheet.innerHTML = '';
+        currentLayout.forEach((slotConfig) => {
+          const slotDiv = document.createElement('div');
+          slotDiv.className = 'page-slot' + (slotConfig.upsideDown ? ' upside-down' : '');
+          slotDiv.setAttribute('data-index', slotConfig.idx);
+          slotDiv.id = slotConfig.id;
+          slotDiv.setAttribute('draggable', 'true');
+
+          slotDiv.addEventListener('dblclick', () => {
+            slotToReplace = parseInt(slotDiv.getAttribute('data-index'), 10);
+            replaceFileInput.click();
+          });
+
+          slotDiv.addEventListener('dragstart', (e) => {
+            draggedSlotIndex = parseInt(slotDiv.getAttribute('data-index'), 10);
+            e.dataTransfer.effectAllowed = 'move';
+          });
+
+          slotDiv.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            slotDiv.classList.add('drag-over');
+          });
+
+          slotDiv.addEventListener('dragleave', () => {
+            slotDiv.classList.remove('drag-over');
+          });
+
+          slotDiv.addEventListener('drop', (e) => {
+            e.preventDefault();
+            slotDiv.classList.remove('drag-over');
+            const targetSlotIndex = parseInt(slotDiv.getAttribute('data-index'), 10);
+
+            if (draggedSlotIndex !== null && draggedSlotIndex !== targetSlotIndex) {
+              const temp = pageImages[draggedSlotIndex];
+              pageImages[draggedSlotIndex] = pageImages[targetSlotIndex];
+              pageImages[targetSlotIndex] = temp;
+
+              renderBook();
+            }
+          });
+
+          a4Sheet.appendChild(slotDiv);
+        });
+        renderBook();
+      }
+
+      btnGenerate.addEventListener('click', () => {
+        if (!isImageLoaded) {
+          alert('Por favor, carregue uma imagem primeiro.');
+          return;
+        }
+
+        const canvas = document.createElement('canvas');
+        const ctx = canvas.getContext('2d');
+        const isRotated = transformState.rotation % 180 !== 0;
+        canvas.width = isRotated ? rawImage.height : rawImage.width;
+        canvas.height = isRotated ? rawImage.width : rawImage.height;
+
+        ctx.translate(canvas.width / 2, canvas.height / 2);
+        ctx.rotate((transformState.rotation * Math.PI) / 180);
+        ctx.scale(transformState.flipH, transformState.flipV);
+        ctx.drawImage(rawImage, -rawImage.width / 2, -rawImage.height / 2);
+
+        const mode = cutModeSelect.value;
+        pageImages = [];
+
+        if (mode === 'equal') {
+          const dataUrl = canvas.toDataURL();
+          for (let i = 0; i < 8; i++) pageImages.push(dataUrl);
+        } else {
+          let rows = mode === '2x4' ? 4 : 2;
+          let cols = mode === '2x4' ? 2 : 4;
+          let pieceW = canvas.width / cols;
+          let pieceH = canvas.height / rows;
+
+          for (let r = 0; r < rows; r++) {
+            for (let c = 0; c < cols; c++) {
+              const pCanvas = document.createElement('canvas');
+              pCanvas.width = pieceW;
+              pCanvas.height = pieceH;
+              const pCtx = pCanvas.getContext('2d');
+              pCtx.drawImage(canvas, c * pieceW, r * pieceH, pieceW, pieceH, 0, 0, pieceW, pieceH);
+              pageImages.push(pCanvas.toDataURL());
+            }
+          }
+        }
+
+        renderBook();
+      });
+
+      function renderBook() {
+        const slots = document.querySelectorAll('.page-slot');
+        slots.forEach(slot => {
+          const idx = parseInt(slot.getAttribute('data-index'), 10);
+          slot.innerHTML = '';
+          if (pageImages[idx]) {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'page-slot-content';
+            
+            const m = pageMargins[idx];
+            wrapper.style.padding = `${m[0]}px ${m[1]}px ${m[2]}px ${m[3]}px`;
+
+            const img = document.createElement('img');
+            img.src = pageImages[idx];
+            
+            wrapper.appendChild(img);
+            slot.appendChild(wrapper);
+          }
+        });
+      }
+
+      toggleCutLines.addEventListener('change', (e) => {
+        a4Sheet.classList.toggle('show-cut-lines', e.target.checked);
+      });
+
+      replaceFileInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file || slotToReplace === null) return;
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          pageImages[slotToReplace] = event.target.result;
+          renderBook();
+          replaceFileInput.value = '';
+        };
+        reader.readAsDataURL(file);
+      });
+
+      for (let i = 0; i < 8; i++) {
+        const inputEl = document.getElementById(`margin-img-${i}`);
+        inputEl.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.getAttribute('data-index'), 10);
+          const vals = e.target.value.split(',').map(v => parseFloat(v.trim()));
+          if (vals.length === 4 && vals.every(v => !isNaN(v))) {
+            pageMargins[idx] = vals;
+            renderBook();
+          }
+        });
+      }
+
+      btnPrint.addEventListener('click', () => {
+        window.print();
+      });
+
+      btnSavePng.addEventListener('click', () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 2479;
+        canvas.height = 1754;
+        const ctx = canvas.getContext('2d');
+
+        ctx.fillStyle = '#FFFFFF';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        const slotWidth = canvas.width / 4;
+        const slotHeight = canvas.height / 2;
+
+        let loadedCount = 0;
+        currentLayout.forEach((slotConfig, positionIdx) => {
+          const col = positionIdx % 4;
+          const row = Math.floor(positionIdx / 4);
+          const imgIdx = slotConfig.idx;
+
+          if (!pageImages[imgIdx]) {
+            loadedCount++;
+            return;
+          }
+
+          const img = new Image();
+          img.onload = () => {
+            ctx.save();
+            const x = col * slotWidth;
+            const y = row * slotHeight;
+
+            ctx.translate(x + slotWidth / 2, y + slotHeight / 2);
+
+            const scaleFactor = canvas.width / a4Sheet.clientWidth;
+            const margins = pageMargins[imgIdx];
+            
+            const topM = margins[0] * scaleFactor;
+            const rightM = margins[1] * scaleFactor;
+            const bottomM = margins[2] * scaleFactor;
+            const leftM = margins[3] * scaleFactor;
+
+            const availW = slotWidth - (leftM + rightM);
+            const availH = slotHeight - (topM + bottomM);
+
+            if (slotConfig.upsideDown) {
+              ctx.rotate(Math.PI);
+            }
+
+            const drawW = availW;
+            const drawH = availH;
+
+            const offsetX = (leftM - rightM) / 2;
+            const offsetY = (topM - bottomM) / 2;
+
+            if (slotConfig.upsideDown) {
+              ctx.drawImage(img, -drawW / 2 - offsetX, -drawH / 2 - offsetY, drawW, drawH);
+            } else {
+              ctx.drawImage(img, -drawW / 2 + offsetX, -drawH / 2 + offsetY, drawW, drawH);
+            }
+
+            ctx.restore();
+
+            loadedCount++;
+            if (loadedCount === currentLayout.length) {
+              if (toggleCutLines.checked) {
+                ctx.strokeStyle = '#000000';
+                ctx.lineWidth = 2;
+                ctx.setLineDash([8, 8]);
+                for (let i = 1; i < 4; i++) {
+                  ctx.beginPath();
+                  ctx.moveTo(i * slotWidth, 0);
+                  ctx.lineTo(i * slotWidth, canvas.height);
+                  ctx.stroke();
+                }
+                ctx.beginPath();
+                ctx.moveTo(0, slotHeight);
+                ctx.lineTo(canvas.width, slotHeight);
+                ctx.stroke();
+              }
+
+              const link = document.createElement('a');
+              link.download = 'mini-livrinho-a4.png';
+              link.href = canvas.toDataURL('image/png');
+              link.click();
+            }
+          };
+          img.src = pageImages[imgIdx];
+        });
+      });
+
+      btnExportCsv.addEventListener('click', () => {
+        let csvContent = "data:text/csv;charset=utf-8,";
+        csvContent += "Pagina;Margem_Superior_px;Margem_Direita_px;Margem_Inferior_px;Margem_Esquerda_px\n";
+
+        pageMargins.forEach((m, idx) => {
+          const row = [
+            idx + 1,
+            m[0].toString().replace('.', ','),
+            m[1].toString().replace('.', ','),
+            m[2].toString().replace('.', ','),
+            m[3].toString().replace('.', ',')
+          ].join(';');
+          csvContent += row + "\n";
+        });
+
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.setAttribute('href', encodedUri);
+        link.setAttribute('download', 'configuracao_margens_livrinho.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      buildDOMSlots();
+
+    })();
+  </script>
+</body>
+</html>
